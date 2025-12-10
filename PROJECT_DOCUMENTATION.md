@@ -1,0 +1,760 @@
+# 💰 Splitter - Complete Project Documentation
+
+## 📋 Table of Contents
+1. [Project Overview](#project-overview)
+2. [Architecture](#architecture)
+3. [UI/UX Design](#uiux-design)
+4. [Page-by-Page Breakdown](#page-by-page-breakdown)
+5. [Calculation Algorithms](#calculation-algorithms)
+6. [Data Models](#data-models)
+7. [Navigation Flow](#navigation-flow)
+
+---
+
+## Project Overview
+
+**Splitter** is a sophisticated expense-sharing mobile application built with **Flutter** using **Cupertino design** (iOS-style) that enables groups to track, split, and settle expenses efficiently. The app supports two primary use cases:
+
+- **Trip Groups**: For friends traveling together
+- **Bachelor Mess Groups**: For roommates sharing living expenses and meals
+
+### Core Technologies
+- **Frontend**: Flutter (Cupertino widgets)
+- **State Management**: Provider
+- **Navigation**: GoRouter
+- **Backend**: Firebase (Auth, Firestore, Storage)
+- **PDF Generation**: pdf + printing packages
+- **Charts**: fl_chart
+
+---
+
+## Architecture
+
+### State Management Pattern
+The app uses **Provider** for state management with the following services:
+- `AuthService` - Authentication state
+- `UserService` - User profile management
+- `GroupService` - Group CRUD operations
+- `ExpenseService` - Expense management
+- `MealService` - Meal tracking
+
+### Project Structure
+```
+lib/
+├── models/          # Data models (User, Group, Expense, Meal)
+├── services/        # Business logic & Firebase operations
+├── screens/         # UI screens organized by feature
+├── widgets/         # Reusable components
+└── utils/           # Router configuration
+```
+
+---
+
+## UI/UX Design
+
+### Design System
+**Following Apple Human Interface Guidelines (HIG)**
+
+#### Color Palette
+- **Primary**: `CupertinoColors.systemIndigo`
+- **Background**: `CupertinoColors.systemGroupedBackground`
+- **Success**: `CupertinoColors.systemGreen`
+- **Danger**: `CupertinoColors.systemRed`
+- **Warning**: `CupertinoColors.systemOrange`
+
+#### Typography
+- **Large Title**: 34pt, Bold
+- **Title**: 24pt, Bold
+- **Headline**: 20pt, Semibold
+- **Body**: 17pt, Regular
+- **Caption**: 12pt, Regular
+
+#### UI Components
+- `CupertinoNavigationBar` - Top navigation
+- `CupertinoPageScaffold` - Page structure
+- `CupertinoListTile` - List items
+- `CupertinoButton` - Action buttons
+- `CupertinoTextField` - Text inputs
+- `CupertinoActionSheet` - Bottom sheets
+- `CupertinoAlertDialog` - Dialogs
+
+#### Navigation Pattern
+**Bottom Tab Navigation** (3 tabs):
+1. **Dashboard** - Home overview
+2. **Groups** - Group list
+3. **Profile** - User settings
+
+---
+
+## Page-by-Page Breakdown
+
+### 1. Authentication Pages
+
+#### Login Screen
+**Path**: `/login`
+
+**UI Elements**:
+- App logo and title
+- Email text field
+- Password text field (obscured)
+- "Sign In" button (filled)
+- "Sign In with Google" button
+- "Forgot Password?" link
+- "Create Account" navigation link
+
+**Functionality**:
+- Email/password authentication
+- Google Sign-In integration
+- Password reset via email dialog
+- Form validation
+- Error handling with native alerts
+- Auto-navigation to dashboard on success
+
+**Calculations**: None
+
+---
+
+#### Sign Up Screen
+**Path**: `/signup`
+
+**UI Elements**:
+- Display name field
+- Email field
+- Password field
+- Confirm password field
+- "Create Account" button
+- "Already have an account?" link
+
+**Functionality**:
+- User registration with email/password
+- Display name setup
+- Password confirmation validation
+- User document creation in Firestore
+- Auto-login after registration
+
+**Calculations**: None
+
+---
+
+### 2. Dashboard Screen
+**Path**: `/` (Home)
+
+**UI Elements**:
+- Welcome header with user name
+- Summary cards:
+  - Total Groups count
+  - Active Splits count
+- "Recent Groups" section
+- Group list with tap navigation
+- Empty state with "Create First Group" CTA
+
+**Functionality**:
+- Real-time group list stream
+- Group count display
+- Quick navigation to group details
+- Group type badge (Trip/Bachelor Mess)
+- Member count display
+
+**Calculations**:
+```dart
+Total Groups = groups.length
+Active Splits = 0 (placeholder for future)
+Member Count = group.memberIds.length
+```
+
+---
+
+### 3. Group Management Pages
+
+#### Groups List Screen
+**Path**: `/groups`
+
+**UI Elements**:
+- Navigation bar with "Create Group" button
+- Searchable group list
+- Group cards showing:
+  - Group name
+  - Type badge
+  - Member count
+  - Creation date
+- Empty state illustration
+
+**Functionality**:
+- Stream-based real-time updates
+- Filter by user membership
+- Navigation to group details
+- Create group navigation
+
+**Calculations**: Same as Dashboard
+
+---
+
+#### Create Group Screen
+**Path**: `/create-group`
+
+**UI Elements**:
+- Group name field
+- Description field (optional)
+- Group type segmented control:
+  - Trip
+  - Bachelor Mess
+- Member invitation section:
+  - Email input field
+  - "Add Member" button
+  - Member chips (removable)
+- "Create Group" button
+
+**Functionality**:
+- Group creation with validation
+- Member invitation by email
+- Email validation
+- Duplicate member prevention
+- Auto-add creator as member
+- Navigate to group details on success
+
+**Calculations**:
+```dart
+memberIds = [creatorId, ...invitedUserIds]
+createdAt = DateTime.now()
+```
+
+---
+
+#### Group Details Screen
+**Path**: `/group/:groupId`
+
+**UI Elements**:
+- **Header Section**:
+  - Group name
+  - Type badge
+  - Description
+  - Close group button
+- **Info Cards**:
+  - Total Expenses
+  - Total Amount
+  - Member Count
+- **Action Buttons**:
+  - Add Expense (FAB)
+  - Settlement
+  - Analytics
+  - Mess Meals (for Bachelor Mess)
+  - Outside Meals (for Trip)
+- **Members Section**:
+  - Member avatars/names
+  - Invite button
+- **Recent Expenses List**:
+  - Expense tiles with:
+    - Description
+    - Amount (formatted)
+    - Payer name
+    - Date
+    - Split type
+  - Tap for detailed view
+
+**Functionality**:
+- Real-time expense stream
+- Real-time member updates
+- Member invitation dialog
+- Expense detail modal
+- Delete expense (swipe action)
+- PDF generation on group close
+- Navigation to sub-screens
+
+**Calculations**:
+```dart
+Total Expenses = expenses.length
+Total Amount = expenses.fold(0.0, (sum, e) => sum + e.amount)
+Member Count = group.memberIds.length
+```
+
+**Expense Detail Modal**:
+- Full expense information
+- Split breakdown per member
+- Receipt image (if available)
+- Payer information
+- Date/time
+
+---
+
+### 4. Expense Management Pages
+
+#### Add Expense Screen
+**Path**: `/group/:groupId/add-expense`
+
+**UI Elements**:
+- **Basic Info**:
+  - Description field
+  - Amount field (numeric)
+  - Date picker
+- **Payer Selection**:
+  - Picker showing group members
+- **Receipt Upload**:
+  - Image picker button
+  - Image preview
+  - Remove option
+- **Split Type Selector**:
+  - Segmented control:
+    - Equal Split
+    - Unequal Split
+    - Share-based Split
+- **Split Details** (dynamic based on type):
+  - Equal: Auto-calculated preview
+  - Unequal: Amount input per member
+  - Shares: Share input per member
+- **Save Button**
+
+**Functionality**:
+- Form validation
+- Image selection from gallery/camera
+- Receipt upload to Firebase Storage
+- Split calculation validation
+- Expense creation in Firestore
+- Error handling
+
+**Calculations**:
+
+**Equal Split**:
+```dart
+splitDetails = {};
+final perPerson = amount / memberCount;
+for (member in members) {
+  splitDetails[member.id] = perPerson;
+}
+```
+
+**Unequal Split**:
+```dart
+// User enters custom amounts
+// Validation: sum of all amounts must equal total
+final totalSplit = splitDetails.values.fold(0.0, (a, b) => a + b);
+if (totalSplit != amount) showError();
+```
+
+**Share-based Split**:
+```dart
+// User enters shares (e.g., 2, 1, 1)
+final totalShares = shares.values.fold(0, (a, b) => a + b);
+final perShare = amount / totalShares;
+for (entry in shares.entries) {
+  splitDetails[entry.key] = entry.value * perShare;
+}
+```
+
+---
+
+#### Settlement Screen
+**Path**: `/group/:groupId/settlement`
+
+**UI Elements**:
+- **Summary Section**:
+  - Total group expenses
+  - Settlement status
+- **Balance List**:
+  - Member cards with:
+    - Name
+    - Balance (green if surplus, red if due)
+    - Status indicator
+- **Settlement Transactions**:
+  - "Who Pays Whom" list
+  - Transaction cards: "A pays ৳X to B"
+- **Export Button** (future)
+
+**Functionality**:
+- Real-time expense fetching
+- Settlement calculation using service
+- Visual balance indicators
+- Transaction optimization
+
+**Calculations** (Settlement Algorithm):
+
+```dart
+// Step 1: Calculate net balance per member
+balances = {};
+for (member in members) {
+  balances[member.id] = 0.0;
+}
+
+for (expense in expenses) {
+  // Payer gets credited (positive)
+  balances[expense.payerId] += expense.amount;
+  
+  // Participants get debited (negative)
+  for (entry in expense.splitDetails.entries) {
+    balances[entry.key] -= entry.value;
+  }
+}
+
+// Step 2: Separate debtors and creditors
+debtors = {};   // balance < 0
+creditors = {}; // balance > 0
+
+for (entry in balances.entries) {
+  if (entry.value < -0.01) {
+    debtors[entry.key] = -entry.value;  // Store as positive
+  } else if (entry.value > 0.01) {
+    creditors[entry.key] = entry.value;
+  }
+}
+
+// Step 3: Match debtors with creditors (greedy algorithm)
+sortedDebtors = debtors.sortedByValueDesc();
+sortedCreditors = creditors.sortedByValueDesc();
+
+settlements = [];
+debtorIndex = 0;
+creditorIndex = 0;
+
+while (debtorIndex < sortedDebtors.length && 
+       creditorIndex < sortedCreditors.length) {
+  
+  debtor = sortedDebtors[debtorIndex];
+  creditor = sortedCreditors[creditorIndex];
+  
+  amount = min(debtor.value, creditor.value);
+  
+  settlements.add({
+    from: debtor.key,
+    to: creditor.key,
+    amount: amount
+  });
+  
+  // Update remaining balances
+  if (debtor.value < creditor.value) {
+    creditor.value -= amount;
+    debtorIndex++;
+  } else if (debtor.value > creditor.value) {
+    debtor.value -= amount;
+    creditorIndex++;
+  } else {
+    debtorIndex++;
+    creditorIndex++;
+  }
+}
+```
+
+**Example**:
+- A paid ৳300, owes ৳100 → Balance: +৳200
+- B paid ৳0, owes ৳150 → Balance: -৳150
+- C paid ৳100, owes ৳150 → Balance: -৳50
+
+**Result**: B pays ৳150 to A, C pays ৳50 to A
+
+---
+
+#### Analytics Screen
+**Path**: `/group/:groupId/analytics`
+
+**UI Elements**:
+- **Overview Cards**:
+  - Total spent
+  - Average per person
+  - Number of expenses
+- **Charts** (fl_chart):
+  - Pie chart: Expense distribution by member
+  - Bar chart: Spending over time
+  - Line chart: Cumulative expenses
+- **Top Spenders List**:
+  - Ranked member list with amounts
+- **Category Breakdown** (future)
+
+**Functionality**:
+- Real-time data aggregation
+- Chart rendering
+- Date range filtering (future)
+
+**Calculations**:
+```dart
+Total Spent = expenses.fold(0.0, (sum, e) => sum + e.amount)
+Average Per Person = Total Spent / memberCount
+
+// Per member spending (what they paid)
+memberSpending = {};
+for (expense in expenses) {
+  memberSpending[expense.payerId] += expense.amount;
+}
+
+// Per member owed (what they consumed)
+memberOwed = {};
+for (expense in expenses) {
+  for (entry in expense.splitDetails.entries) {
+    memberOwed[entry.key] += entry.value;
+  }
+}
+```
+
+---
+
+### 5. Meal Tracking Pages
+
+#### Meal Tracking Screen (Bachelor Mess)
+**Path**: `/group/:groupId/meals`
+
+**UI Elements**:
+- **Month Selector**:
+  - Current month display
+  - Previous/Next navigation
+- **Statistics Cards**:
+  - Total Expenses (market)
+  - Total Meals
+  - Meal Rate (per meal cost)
+- **Meal Counts Section**:
+  - Per-member meal count
+  - Breakdown: Breakfast/Lunch/Dinner
+- **Member Balances**:
+  - Each member's:
+    - Total deposit (expenses paid)
+    - Total cost (meals × rate)
+    - Balance (deposit - cost)
+    - Status: Surplus/Due/Balanced
+- **Settlement Summary**:
+  - "Who Pays Whom" transactions
+- **Add Meal FAB**
+- **Recent Meals List**:
+  - Meal type icon
+  - Member name
+  - Date
+  - Delete option
+
+**Functionality**:
+- Month-wise filtering
+- Add meals (Breakfast/Lunch/Dinner)
+- Real-time meal counting
+- Real-time expense tracking
+- Balance calculation
+- Settlement generation
+- Meal deletion
+
+**Calculations** (Meal Settlement Algorithm):
+
+```dart
+// Filter data by selected month
+monthlyExpenses = expenses.where((e) => 
+  e.date.year == month.year && e.date.month == month.month
+).toList();
+
+monthlyMeals = meals.where((m) => 
+  m.date.year == month.year && m.date.month == month.month
+).toList();
+
+// Step 1: Calculate Meal Rate
+Total Expenses = monthlyExpenses.fold(0.0, (sum, e) => sum + e.amount)
+Total Global Meals = monthlyMeals.length
+Meal Rate = Total Expenses / Total Global Meals
+
+// Step 2: Count meals per member
+memberMealCounts = {};
+for (meal in monthlyMeals) {
+  memberMealCounts[meal.userId]++;
+}
+
+// Step 3: Calculate member cost
+memberCosts = {};
+for (member in members) {
+  mealCount = memberMealCounts[member.id] ?? 0;
+  memberCosts[member.id] = mealCount * Meal Rate;
+}
+
+// Step 4: Calculate member deposits
+memberDeposits = {};
+for (expense in monthlyExpenses) {
+  memberDeposits[expense.payerId] += expense.amount;
+}
+
+// Step 5: Calculate balances
+memberBalances = {};
+for (member in members) {
+  deposit = memberDeposits[member.id] ?? 0.0;
+  cost = memberCosts[member.id] ?? 0.0;
+  balance = deposit - cost;
+  
+  memberBalances[member.id] = {
+    mealCount: memberMealCounts[member.id] ?? 0,
+    deposit: deposit,
+    cost: cost,
+    balance: balance,
+    status: balance > 0.01 ? "Surplus" : 
+            balance < -0.01 ? "Due" : "Balanced"
+  };
+}
+
+// Step 6: Settlement transactions (same greedy algorithm as expense settlement)
+```
+
+**Example**:
+Monthly Data:
+- Total market expenses: ৳9,000
+- Total meals: 90 (30 days × 3 meals avg)
+- Meal Rate: ৳9,000 / 90 = ৳100/meal
+
+Member A:
+- Meals eaten: 25
+- Cost: 25 × ৳100 = ৳2,500
+- Deposited: ৳3,000
+- Balance: ৳3,000 - ৳2,500 = +৳500 (Surplus)
+
+Member B:
+- Meals eaten: 30
+- Cost: 30 × ৳100 = ৳3,000
+- Deposited: ৳2,500
+- Balance: ৳2,500 - ৳3,000 = -৳500 (Due)
+
+**Settlement**: B pays ৳500 to A
+
+---
+
+#### Outside Meal Screen (Trip)
+**Path**: `/group/:groupId/outside-meals`
+
+**UI Elements**:
+- Similar to Meal Tracking Screen
+- Focused on restaurant/outside meals
+- Simpler calculation (no market expenses)
+
+**Functionality**:
+- Track meals eaten outside
+- Calculate per-meal costs
+- Generate balances
+
+---
+
+#### Meal Settlement Screen
+**Path**: `/group/:groupId/meal-settlement`
+
+**UI Elements**:
+- Month selector
+- Summary statistics
+- Member status cards
+- Settlement transactions list
+- Export options (future)
+
+**Functionality**:
+- Detailed settlement view
+- Month comparison
+- Transaction history
+
+---
+
+### 6. Profile Screen
+**Path**: `/profile`
+
+**UI Elements**:
+- User avatar (placeholder)
+- Display name
+- Email
+- Bio (optional)
+- Edit profile button
+- Logout button
+- App version
+
+**Functionality**:
+- Profile editing (future)
+- Logout with confirmation
+- Navigate to login after logout
+
+---
+
+## Data Models
+
+### UserModel
+```dart
+{
+  id: String,           // Firebase Auth UID
+  email: String,
+  displayName: String,
+  avatarUrl: String?,   // Optional
+  bio: String?          // Optional
+}
+```
+
+### GroupModel
+```dart
+{
+  id: String,
+  name: String,
+  description: String?,
+  type: GroupType,      // trip | bachelorMess
+  memberIds: List<String>,
+  createdBy: String,
+  createdAt: DateTime,
+  isClosed: bool,
+  closedAt: DateTime?
+}
+```
+
+### ExpenseModel
+```dart
+{
+  id: String,
+  groupId: String,
+  payerId: String,
+  amount: double,
+  description: String,
+  date: DateTime,
+  receiptUrl: String?,
+  splitType: SplitType, // equally | unequally | shares
+  splitDetails: Map<String, double>  // userId -> amount
+}
+```
+
+### MealModel
+```dart
+{
+  id: String,
+  groupId: String,
+  userId: String,
+  mealType: MealType,   // breakfast | lunch | dinner
+  date: DateTime
+}
+```
+
+---
+
+## Navigation Flow
+
+```mermaid
+graph TD
+    A[App Start] --> B{Authenticated?}
+    B -->|No| C[Login Screen]
+    B -->|Yes| D[Bottom Nav Shell]
+    
+    C --> E[Sign Up Screen]
+    C --> D
+    
+    D --> F[Dashboard Tab]
+    D --> G[Groups Tab]
+    D --> H[Profile Tab]
+    
+    F --> I[Group Details]
+    G --> J[Create Group]
+    G --> I
+    
+    I --> K[Add Expense]
+    I --> L[Settlement]
+    I --> M[Analytics]
+    I --> N{Group Type?}
+    
+    N -->|Bachelor Mess| O[Meal Tracking]
+    N -->|Trip| P[Outside Meals]
+    
+    O --> Q[Meal Settlement]
+    
+    H --> R[Logout]
+    R --> C
+```
+
+---
+
+## Summary
+
+**Splitter** is a comprehensive expense management solution featuring:
+
+✅ **Robust Authentication** - Email/Google Sign-In  
+✅ **Flexible Group Management** - Trip & Bachelor Mess modes  
+✅ **Smart Expense Splitting** - 3 split types with validation  
+✅ **Optimized Settlements** - Minimal transaction algorithm  
+✅ **Meal Tracking System** - Monthly rate-based calculations  
+✅ **Real-time Sync** - Firebase Firestore streams  
+✅ **Beautiful UI** - Native iOS design with Cupertino  
+✅ **PDF Reports** - Comprehensive export functionality  
+
+The app demonstrates advanced Flutter development with complex business logic, real-time data synchronization, and sophisticated financial calculations.
